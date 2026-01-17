@@ -6,6 +6,11 @@ import Guardias from './pages/Guardias'
 import GuardiaDetail from './pages/GuardiaDetail'
 import Administracion from './pages/Administracion'
 import GuardiaApp from './pages/GuardiaApp'
+import Incidentes from './pages/Incidentes'
+import Mensajeria from './pages/Mensajeria'
+import Nomina from './pages/Nomina'
+import Analytics from './pages/Analytics'
+import Documentos from './pages/Documentos'
 import { Toaster } from './components/ui/toaster'
 
 function ProtectedRoute({ children, allowedRoles }: { children: React.ReactNode; allowedRoles?: ('admin' | 'guardia')[] }) {
@@ -81,6 +86,46 @@ function AppRoutes() {
         element={
           <ProtectedRoute allowedRoles={['admin']}>
             <Administracion />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/incidentes"
+        element={
+          <ProtectedRoute allowedRoles={['admin', 'guardia']}>
+            <Incidentes />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/mensajeria"
+        element={
+          <ProtectedRoute allowedRoles={['admin', 'guardia']}>
+            <Mensajeria />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/nomina"
+        element={
+          <ProtectedRoute allowedRoles={['admin']}>
+            <Nomina />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/analytics"
+        element={
+          <ProtectedRoute allowedRoles={['admin']}>
+            <Analytics />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/documentos"
+        element={
+          <ProtectedRoute allowedRoles={['admin']}>
+            <Documentos />
           </ProtectedRoute>
         }
       />

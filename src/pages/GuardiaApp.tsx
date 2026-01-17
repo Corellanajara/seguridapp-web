@@ -14,6 +14,8 @@ import { useToast } from '@/hooks/use-toast'
 import { MapContainer, TileLayer, Marker, useMap } from 'react-leaflet'
 import L from 'leaflet'
 import { supabase } from '@/lib/supabase'
+import FirmaDialog from '@/components/FirmaDialog'
+import { firmaService, FirmaData } from '@/services/firma'
 
 // Fix para los iconos de Leaflet
 delete (L.Icon.Default.prototype as any)._getIconUrl
@@ -45,6 +47,8 @@ export default function GuardiaApp() {
   
   // Estados para control de asistencia
   const [mostrarCamara, setMostrarCamara] = useState(false)
+  const [mostrarFirma, setMostrarFirma] = useState(false)
+  const [firmaData, setFirmaData] = useState<FirmaData | null>(null)
   const [tipoAsistencia, setTipoAsistencia] = useState<'entrada' | 'salida' | null>(null)
   const [registrandoAsistencia, setRegistrandoAsistencia] = useState(false)
   const [ultimaAsistencia, setUltimaAsistencia] = useState<Asistencia | null>(null)
@@ -250,16 +254,77 @@ export default function GuardiaApp() {
     }
   }
 
-  const generarFirmaMock = (): string => {
-    // Mock de firma electrónica
-    return JSON.stringify({
-      tipo: 'firma_electronica',
-      metodo: 'clave_unica', // Mock - potencial uso de clave única
-      timestamp: new Date().toISOString(),
-      hash: `mock_hash_${Date.now()}_${Math.random().toString(36).substring(7)}`,
-      estado: 'pendiente_implementacion',
-      nota: 'Implementación de firma con Clave Única pendiente',
-    })
+  const handleFirmaCompleta = (firma: FirmaData) => {
+    setFirmaData(firma)
+    // Continuar con el registro de asistencia
+    procesarAsistenciaConFirma()
+  }
+
+  const procesarAsistenciaConFirma = async () => {
+    if (!tipoAsistencia || !latitud || !longitud || !firmaData) {
+      toast({
+        title: 'Error',
+        description: 'Faltan datos para registrar la asistencia',
+        variant: 'destructive',
+      })
+      return
+    }
+
+    setRegistrandoAsistencia(true)
+
+    try {
+      // Capturar foto
+      const fotoBase64 = await capturarFoto()
+      
+      // Subir foto
+      const fotoUrl = await subirFoto(fotoBase64)
+
+      // Validar firma
+      const validacion = firmaService.validarFirma(firmaData)
+      if (!validacion.valido) {
+        toast({
+          title: 'Advertencia',
+          description: validacion.mensaje || 'La firma no es válida',
+          variant: 'destructive',
+        })
+      }
+
+      // Almacenar firma
+      const firmaAlmacenada = await firmaService.almacenarFirma(firmaData, `asistencia_${tipoAsistencia}_${Date.now()}`)
+      const firmaDocumental = JSON.stringify(firmaData)
+
+      // Registrar asistencia
+      const asistencia = await asistenciasService.crearAsistencia({
+        tipo_asistencia: tipoAsistencia,
+        foto_url: fotoUrl,
+        latitud,
+        longitud,
+        firma_documental: firmaDocumental,
+        firma_clave_unica: firmaData.tipo === 'electronica' || firmaData.tipo === 'clave_unica',
+        observaciones: `Registro de ${tipoAsistencia} georeferenciado con firma ${firmaData.tipo}`,
+      })
+
+      toast({
+        title: 'Asistencia registrada',
+        description: `Se registró tu ${tipoAsistencia} correctamente`,
+      })
+
+      // Actualizar última asistencia
+      setUltimaAsistencia(asistencia)
+      setMostrarCamara(false)
+      setMostrarFirma(false)
+      setTipoAsistencia(null)
+      setFirmaData(null)
+      detenerCamara()
+    } catch (error: any) {
+      toast({
+        title: 'Error al registrar asistencia',
+        description: error.message || 'No se pudo registrar la asistencia',
+        variant: 'destructive',
+      })
+    } finally {
+      setRegistrandoAsistencia(false)
+    }
   }
 
   const registrarAsistencia = async (tipo: 'entrada' | 'salida') => {
@@ -286,48 +351,10 @@ export default function GuardiaApp() {
       return
     }
 
-    setRegistrandoAsistencia(true)
-
-    try {
-      // Capturar foto
-      const fotoBase64 = await capturarFoto()
-      
-      // Subir foto
-      const fotoUrl = await subirFoto(fotoBase64)
-
-      // Generar firma mock
-      const firmaDocumental = generarFirmaMock()
-
-      // Registrar asistencia
-      const asistencia = await asistenciasService.crearAsistencia({
-        tipo_asistencia: tipoAsistencia,
-        foto_url: fotoUrl,
-        latitud,
-        longitud,
-        firma_documental: firmaDocumental,
-        firma_clave_unica: false, // Mock - pendiente implementación
-        observaciones: `Registro de ${tipoAsistencia} georeferenciado`,
-      })
-
-      toast({
-        title: 'Asistencia registrada',
-        description: `Se registró tu ${tipoAsistencia} correctamente`,
-      })
-
-      // Actualizar última asistencia
-      setUltimaAsistencia(asistencia)
-      setMostrarCamara(false)
-      setTipoAsistencia(null)
-      detenerCamara()
-    } catch (error: any) {
-      toast({
-        title: 'Error al registrar asistencia',
-        description: error.message || 'No se pudo registrar la asistencia',
-        variant: 'destructive',
-      })
-    } finally {
-      setRegistrandoAsistencia(false)
-    }
+    // Cerrar cámara y mostrar diálogo de firma
+    detenerCamara()
+    setMostrarCamara(false)
+    setMostrarFirma(true)
   }
 
   const cancelarCamara = () => {
@@ -657,13 +684,22 @@ export default function GuardiaApp() {
                   <FileSignature className="h-4 w-4 mt-0.5 text-muted-foreground" />
                   <div className="text-xs text-muted-foreground">
                     <p className="font-medium mb-1">Firma Documental:</p>
-                    <p>Implementación con Clave Única pendiente. Actualmente se registra un mock de firma electrónica.</p>
+                    <p>Después de capturar la foto, deberás firmar el documento.</p>
                   </div>
                 </div>
               </div>
             </div>
           </DialogContent>
         </Dialog>
+
+        {/* Dialog para firma documental */}
+        <FirmaDialog
+          open={mostrarFirma}
+          onOpenChange={setMostrarFirma}
+          onFirmaCompleta={handleFirmaCompleta}
+          titulo={`Firma para ${tipoAsistencia === 'entrada' ? 'Entrada' : 'Salida'}`}
+          descripcion="Firma el documento de asistencia usando el canvas o Clave Única"
+        />
       </div>
     </div>
   )

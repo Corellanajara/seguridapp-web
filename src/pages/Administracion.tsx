@@ -8,6 +8,9 @@ import { Users, Building, MapPin, Settings, Clock, Camera, FileSignature, Loader
 import { asistenciasService } from '@/services/asistencias'
 import { AsistenciaConGuardia } from '@/types'
 import { useToast } from '@/hooks/use-toast'
+import Turnos from './Turnos'
+import Zonas from './Zonas'
+import Reportes from './Reportes'
 
 export default function Administracion() {
   const { toast } = useToast()
@@ -233,57 +236,15 @@ export default function Administracion() {
           </TabsContent>
 
           <TabsContent value="zonas" className="space-y-4">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <MapPin className="h-5 w-5" />
-                  Zonas de Seguridad
-                </CardTitle>
-                <CardDescription>
-                  Define y gestiona las zonas de seguridad
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-muted-foreground">
-                  Próximamente: Creación y gestión de zonas de seguridad en el mapa
-                </p>
-              </CardContent>
-            </Card>
+            <Zonas />
           </TabsContent>
 
           <TabsContent value="turnos" className="space-y-4">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Building className="h-5 w-5" />
-                  Turnos y Horarios
-                </CardTitle>
-                <CardDescription>
-                  Configuración de turnos y horarios de trabajo
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-muted-foreground">
-                  Próximamente: Gestión de turnos y asignación de horarios
-                </p>
-              </CardContent>
-            </Card>
+            <Turnos />
           </TabsContent>
 
           <TabsContent value="reportes" className="space-y-4">
-            <Card>
-              <CardHeader>
-                <CardTitle>Reportes y Estadísticas</CardTitle>
-                <CardDescription>
-                  Visualiza reportes y estadísticas del sistema
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-muted-foreground">
-                  Próximamente: Generación de reportes y análisis de datos
-                </p>
-              </CardContent>
-            </Card>
+            <Reportes />
           </TabsContent>
         </Tabs>
       </div>

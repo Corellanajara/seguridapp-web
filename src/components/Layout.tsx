@@ -10,7 +10,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { Map, Users, Settings, LogOut, Shield } from 'lucide-react'
+import { Map, Users, Settings, LogOut, Shield, AlertTriangle, MessageSquare, TrendingUp, FileText, DollarSign } from 'lucide-react'
 
 interface LayoutProps {
   children: React.ReactNode
@@ -29,7 +29,12 @@ export default function Layout({ children }: LayoutProps) {
   const menuItems = [
     { path: '/', label: 'Mapa', icon: Map },
     { path: '/guardias', label: 'Guardias', icon: Users },
+    { path: '/incidentes', label: 'Incidentes', icon: AlertTriangle },
+    { path: '/mensajeria', label: 'Mensajería', icon: MessageSquare },
     { path: '/administracion', label: 'Administración', icon: Settings },
+    { path: '/analytics', label: 'Analytics', icon: TrendingUp },
+    { path: '/nomina', label: 'Nómina', icon: DollarSign },
+    { path: '/documentos', label: 'Documentos', icon: FileText },
   ]
 
   return (
