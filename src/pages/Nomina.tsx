@@ -20,7 +20,7 @@ import {
 export default function Nomina() {
   const { toast } = useToast()
   const [guardias, setGuardias] = useState<Guardia[]>([])
-  const [guardiaId, setGuardiaId] = useState<string>('')
+  const [guardiaId, setGuardiaId] = useState<string>('all')
   const [fechaInicio, setFechaInicio] = useState<string>('')
   const [fechaFin, setFechaFin] = useState<string>('')
   const [formato, setFormato] = useState<'csv' | 'excel' | 'json'>('csv')
@@ -53,7 +53,7 @@ export default function Nomina() {
     setExportando(true)
     try {
       await nominaService.exportarHorasTrabajadas(
-        guardiaId || undefined,
+        guardiaId === 'all' ? undefined : guardiaId,
         fechaInicio || undefined,
         fechaFin || undefined,
         formato
@@ -102,7 +102,7 @@ export default function Nomina() {
                     <SelectValue placeholder="Todos" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Todos los guardias</SelectItem>
+                    <SelectItem value="all">Todos los guardias</SelectItem>
                     {guardias.map((guardia) => (
                       <SelectItem key={guardia.id} value={guardia.id}>
                         {guardia.nombre} {guardia.apellido}

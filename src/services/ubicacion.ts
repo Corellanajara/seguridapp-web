@@ -70,9 +70,12 @@ export const ubicacionService = {
       .from('guardias')
       .select('*')
       .or(`user_id.eq.${user.id},email.eq.${user.email}`)
-      .single()
+      .maybeSingle()
 
     if (error) throw error
+    if (!data) {
+      throw new Error('No se encontró el perfil del guardia. Contacta al administrador.')
+    }
     return data
   },
 

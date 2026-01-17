@@ -24,7 +24,7 @@ export default function Reportes() {
   const [loading, setLoading] = useState(false)
   
   // Filtros
-  const [guardiaId, setGuardiaId] = useState<string>('')
+  const [guardiaId, setGuardiaId] = useState<string>('all')
   const [fechaInicio, setFechaInicio] = useState<string>('')
   const [fechaFin, setFechaFin] = useState<string>('')
 
@@ -60,7 +60,7 @@ export default function Reportes() {
     setLoading(true)
     try {
       const data = await reportesService.getReporteAsistencias(
-        guardiaId || undefined,
+        guardiaId === 'all' ? undefined : guardiaId,
         fechaInicio || undefined,
         fechaFin || undefined
       )
@@ -80,7 +80,7 @@ export default function Reportes() {
     setLoading(true)
     try {
       const data = await reportesService.getReporteHorasTrabajadas(
-        guardiaId || undefined,
+        guardiaId === 'all' ? undefined : guardiaId,
         fechaInicio || undefined,
         fechaFin || undefined
       )
@@ -100,7 +100,7 @@ export default function Reportes() {
     setLoading(true)
     try {
       const data = await reportesService.getEstadisticasPuntualidad(
-        guardiaId || undefined,
+        guardiaId === 'all' ? undefined : guardiaId,
         fechaInicio || undefined,
         fechaFin || undefined
       )
@@ -158,7 +158,7 @@ export default function Reportes() {
                     <SelectValue placeholder="Todos los guardias" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Todos los guardias</SelectItem>
+                    <SelectItem value="all">Todos los guardias</SelectItem>
                     {guardias.map((guardia) => (
                       <SelectItem key={guardia.id} value={guardia.id}>
                         {guardia.nombre} {guardia.apellido}

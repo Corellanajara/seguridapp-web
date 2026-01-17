@@ -84,12 +84,12 @@ export default function Incidentes() {
   const loadData = async () => {
     setLoading(true)
     try {
-      const perfil = await ubicacionService.getMiPerfil()
       const tiposData = await incidentesService.getAllTipos()
       setTipos(tiposData)
 
       // Si es guardia, cargar solo sus incidentes
       if (role === 'guardia') {
+        const perfil = await ubicacionService.getMiPerfil()
         const incidentesData = await incidentesService.getIncidentesByGuardia(perfil.id)
         setIncidentes(incidentesData)
       } else {
