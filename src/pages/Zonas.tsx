@@ -1,13 +1,13 @@
-import { useEffect, useState } from 'react'
-import Layout from '@/components/Layout'
+import { useEffect, useState, useRef } from 'react'
 import { zonasService } from '@/services/zonas'
 import { guardiasService } from '@/services/guardias'
 import { Zona, AsignacionZona, AsignacionZonaConDetalles, Guardia, AlertaZona } from '@/types'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Plus, MapPin, Users, Edit, Trash2, Loader2, CheckCircle2, XCircle, AlertTriangle } from 'lucide-react'
+import { Plus, MapPin, Users, Edit, Trash2, Loader2, CheckCircle2, XCircle, AlertTriangle, Search, Navigation } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
+import { useGeolocation } from '@/hooks/useGeolocation'
 import {
   Dialog,
   DialogContent,
@@ -41,6 +41,18 @@ export default function Zonas() {
   const [modoEdicion, setModoEdicion] = useState(false)
   const [zonaCoordenadas, setZonaCoordenadas] = useState<string | null>(null)
   const [zonaTipo, setZonaTipo] = useState<'poligono' | 'circulo'>('poligono')
+  // Santiago de Chile como ubicación por defecto
+  const SANTIAGO_CHILE: [number, number] = [-33.4489, -70.6693]
+  const [mapCenter, setMapCenter] = useState<[number, number]>(SANTIAGO_CHILE)
+  const [busquedaUbicacion, setBusquedaUbicacion] = useState('')
+  const [buscandoUbicacion, setBuscandoUbicacion] = useState(false)
+  const [puntosPoligonoCount, setPuntosPoligonoCount] = useState(0)
+  const finalizarPoligonoRef = useRef<(() => void) | null>(null)
+
+  const { latitud, longitud, error: geoError } = useGeolocation({
+    enableHighAccuracy: true,
+    timeout: 10000,
+  })
 
   const [formZona, setFormZona] = useState({
     nombre: '',
@@ -60,6 +72,13 @@ export default function Zonas() {
   useEffect(() => {
     loadData()
   }, [])
+
+  // Actualizar centro del mapa cuando se obtiene la ubicación actual (solo al crear nueva zona)
+  useEffect(() => {
+    if (openZona && !editingZona && latitud && longitud) {
+      setMapCenter([latitud, longitud])
+    }
+  }, [latitud, longitud, openZona, editingZona])
 
   const loadData = async () => {
     setLoading(true)
@@ -92,6 +111,82 @@ export default function Zonas() {
     toast({
       title: 'Zona creada',
       description: 'Ahora completa el formulario para guardar la zona',
+    })
+  }
+
+  // Función para geocodificar una dirección
+  const buscarUbicacion = async () => {
+    if (!busquedaUbicacion.trim()) {
+      toast({
+        title: 'Error',
+        description: 'Por favor ingresa una dirección o lugar',
+        variant: 'destructive',
+      })
+      return
+    }
+
+    setBuscandoUbicacion(true)
+    try {
+      // Usar Nominatim API de OpenStreetMap (gratuita)
+      const response = await fetch(
+        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(busquedaUbicacion)}&limit=1`,
+        {
+          headers: {
+            'User-Agent': 'SeguridApp/1.0',
+          },
+        }
+      )
+
+      if (!response.ok) {
+        throw new Error('Error al buscar la ubicación')
+      }
+
+      const data = await response.json()
+
+      if (data.length === 0) {
+        toast({
+          title: 'No encontrado',
+          description: 'No se encontró la ubicación especificada',
+          variant: 'destructive',
+        })
+        return
+      }
+
+      const resultado = data[0]
+      const lat = parseFloat(resultado.lat)
+      const lon = parseFloat(resultado.lon)
+
+      setMapCenter([lat, lon])
+      toast({
+        title: 'Ubicación encontrada',
+        description: `Centrado en: ${resultado.display_name}`,
+      })
+    } catch (error: any) {
+      toast({
+        title: 'Error',
+        description: error.message || 'Error al buscar la ubicación',
+        variant: 'destructive',
+      })
+    } finally {
+      setBuscandoUbicacion(false)
+    }
+  }
+
+  // Función para usar la ubicación actual
+  const usarUbicacionActual = () => {
+    if (!latitud || !longitud) {
+      toast({
+        title: 'Error',
+        description: geoError || 'No se pudo obtener la ubicación actual',
+        variant: 'destructive',
+      })
+      return
+    }
+
+    setMapCenter([latitud, longitud])
+    toast({
+      title: 'Ubicación actual',
+      description: 'Mapa centrado en tu ubicación actual',
     })
   }
 
@@ -174,6 +269,34 @@ export default function Zonas() {
     }
   }
 
+  // Función para calcular el centro de una zona
+  const calcularCentroZona = (zona: Zona): [number, number] => {
+    try {
+      const coordenadas = JSON.parse(zona.coordenadas)
+      
+      if (zona.tipo === 'circulo') {
+        // Para círculos, el centro está en las coordenadas
+        return [coordenadas.lat, coordenadas.lng]
+      } else {
+        // Para polígonos, calcular el centroide
+        const puntos = Array.isArray(coordenadas)
+          ? coordenadas.map((p: { lat: number; lng: number }) => [p.lat, p.lng])
+          : []
+        
+        if (puntos.length === 0) {
+          return [-33.4489, -70.6693] // Santiago de Chile como fallback
+        }
+        
+        // Calcular centroide (promedio de todas las coordenadas)
+        const sumLat = puntos.reduce((sum, p) => sum + p[0], 0)
+        const sumLng = puntos.reduce((sum, p) => sum + p[1], 0)
+        return [sumLat / puntos.length, sumLng / puntos.length]
+      }
+    } catch (error) {
+      return [-33.4489, -70.6693] // Santiago de Chile como fallback
+    }
+  }
+
   const handleEditZona = (zona: Zona) => {
     setEditingZona(zona)
     setFormZona({
@@ -184,6 +307,11 @@ export default function Zonas() {
     })
     setZonaCoordenadas(zona.coordenadas)
     setZonaTipo(zona.tipo)
+    
+    // Centrar el mapa en la zona guardada
+    const centro = calcularCentroZona(zona)
+    setMapCenter(centro)
+    
     setOpenZona(true)
   }
 
@@ -242,16 +370,13 @@ export default function Zonas() {
 
   if (loading) {
     return (
-      <Layout>
-        <div className="flex items-center justify-center h-64">
-          <Loader2 className="h-8 w-8 animate-spin" />
-        </div>
-      </Layout>
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="h-8 w-8 animate-spin" />
+      </div>
     )
   }
 
   return (
-    <Layout>
       <div className="space-y-6">
         <div>
           <h1 className="text-3xl font-bold">Zonas de Seguridad</h1>
@@ -282,6 +407,14 @@ export default function Zonas() {
               </Card>
               <Dialog open={openZona} onOpenChange={(open) => {
                 setOpenZona(open)
+                if (open && !editingZona) {
+                  // Al abrir para crear nueva zona, centrar en ubicación actual o Santiago
+                  if (latitud && longitud) {
+                    setMapCenter([latitud, longitud])
+                  } else {
+                    setMapCenter(SANTIAGO_CHILE)
+                  }
+                }
                 if (!open) {
                   setEditingZona(null)
                   setZonaCoordenadas(null)
@@ -291,6 +424,10 @@ export default function Zonas() {
                     tipo: 'poligono',
                     activo: true,
                   })
+                  setBusquedaUbicacion('')
+                  setMapCenter(SANTIAGO_CHILE)
+                  setModoEdicion(false)
+                  setPuntosPoligonoCount(0)
                 }
               }}>
                 <DialogTrigger asChild>
@@ -353,23 +490,124 @@ export default function Zonas() {
                           </SelectContent>
                         </Select>
                       </div>
+                      <div className="grid gap-2">
+                        <Label>Buscar Ubicación</Label>
+                        <div className="flex gap-2">
+                          <Input
+                            placeholder="Ej: Buenos Aires, Argentina o una dirección"
+                            value={busquedaUbicacion}
+                            onChange={(e) => setBusquedaUbicacion(e.target.value)}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') {
+                                e.preventDefault()
+                                buscarUbicacion()
+                              }
+                            }}
+                          />
+                          <Button
+                            type="button"
+                            variant="outline"
+                            onClick={buscarUbicacion}
+                            disabled={buscandoUbicacion}
+                          >
+                            {buscandoUbicacion ? (
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : (
+                              <Search className="h-4 w-4" />
+                            )}
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            onClick={usarUbicacionActual}
+                            disabled={!latitud || !longitud}
+                            title={geoError || 'Usar ubicación actual'}
+                          >
+                            <Navigation className="h-4 w-4" />
+                          </Button>
+                        </div>
+                        <p className="text-xs text-muted-foreground">
+                          Busca una ubicación o usa tu ubicación actual para centrar el mapa
+                        </p>
+                      </div>
                       <div className="h-96 rounded-lg overflow-hidden border">
                         <ZonaMap
                           zonas={editingZona ? [editingZona] : []}
                           modoEdicion={modoEdicion}
                           onZonaCreada={handleZonaCreada}
+                          center={mapCenter}
+                          tipoZona={zonaTipo}
+                          onPuntosCountChange={setPuntosPoligonoCount}
+                          finalizarPoligonoRef={finalizarPoligonoRef}
                         />
                       </div>
                       {!zonaCoordenadas && (
-                        <Button
-                          type="button"
-                          variant="outline"
-                          onClick={() => setModoEdicion(true)}
-                        >
-                          {zonaTipo === 'poligono'
-                            ? 'Comenzar a dibujar polígono (click para puntos, doble click para finalizar)'
-                            : 'Comenzar a dibujar círculo (click para centro, segundo click para radio)'}
-                        </Button>
+                        <div className="flex flex-col gap-2">
+                          {!modoEdicion && (
+                            <Button
+                              type="button"
+                              variant="outline"
+                              onClick={() => setModoEdicion(true)}
+                            >
+                              {zonaTipo === 'poligono'
+                                ? 'Comenzar a dibujar polígono'
+                                : 'Comenzar a dibujar círculo'}
+                            </Button>
+                          )}
+                          {modoEdicion && zonaTipo === 'poligono' && (
+                            <div className="space-y-2">
+                              <div className="text-sm text-muted-foreground">
+                                Haz clic en el mapa para agregar puntos. Mínimo 3 puntos requeridos.
+                                {puntosPoligonoCount > 0 && (
+                                  <span className="ml-2 font-medium text-foreground">
+                                    Puntos agregados: {puntosPoligonoCount}
+                                  </span>
+                                )}
+                              </div>
+                              {puntosPoligonoCount >= 3 && (
+                                <Button
+                                  type="button"
+                                  onClick={() => {
+                                    if (finalizarPoligonoRef.current) {
+                                      finalizarPoligonoRef.current()
+                                    }
+                                  }}
+                                  className="w-full"
+                                >
+                                  Finalizar Polígono
+                                </Button>
+                              )}
+                              <Button
+                                type="button"
+                                variant="outline"
+                                onClick={() => {
+                                  setModoEdicion(false)
+                                  setPuntosPoligonoCount(0)
+                                }}
+                                className="w-full"
+                              >
+                                Cancelar
+                              </Button>
+                            </div>
+                          )}
+                          {modoEdicion && zonaTipo === 'circulo' && (
+                            <div className="space-y-2">
+                              <div className="text-sm text-muted-foreground">
+                                Haz clic en el mapa para establecer el centro, luego haz clic nuevamente para establecer el radio.
+                              </div>
+                              <Button
+                                type="button"
+                                variant="outline"
+                                onClick={() => {
+                                  setModoEdicion(false)
+                                }}
+                                className="w-full"
+                              >
+                                Cancelar
+                              </Button>
+                            </div>
+                          )}
+                        </div>
                       )}
                       {zonaCoordenadas && (
                         <div className="p-2 bg-green-50 rounded text-sm text-green-800">
@@ -669,6 +907,5 @@ export default function Zonas() {
           </TabsContent>
         </Tabs>
       </div>
-    </Layout>
   )
 }

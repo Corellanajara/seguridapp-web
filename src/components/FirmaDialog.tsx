@@ -20,49 +20,127 @@ export default function FirmaDialog({
   descripcion = 'Firma el documento usando el canvas o Clave Única',
 }: FirmaDialogProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
+  const containerRef = useRef<HTMLDivElement>(null)
   const [isDrawing, setIsDrawing] = useState(false)
   const [hasSignature, setHasSignature] = useState(false)
   const [guardando, setGuardando] = useState(false)
   const [modo, setModo] = useState<'manual' | 'clave_unica'>('manual')
 
+  // Inicializar y ajustar el canvas
   useEffect(() => {
-    if (open && canvasRef.current) {
+    if (open && canvasRef.current && containerRef.current) {
       const canvas = canvasRef.current
+      const container = containerRef.current
       const ctx = canvas.getContext('2d')
-      if (ctx) {
-        ctx.strokeStyle = '#000'
-        ctx.lineWidth = 2
-        ctx.lineCap = 'round'
-        ctx.lineJoin = 'round'
+      
+      if (!ctx) return
+
+      // Función para ajustar el canvas
+      const resizeCanvas = () => {
+        // Esperar un frame para que el DOM se actualice
+        requestAnimationFrame(() => {
+          // Obtener el tamaño del contenedor
+          const rect = container.getBoundingClientRect()
+          if (rect.width === 0 || rect.height === 0) return
+          
+          const dpr = window.devicePixelRatio || 1
+          const width = rect.width - 32 // Restar padding (16px * 2)
+          const height = Math.max(150, width * 0.5) // Mínimo 150px de altura, proporción 2:1
+          
+          // Guardar el tamaño visual para cálculos de coordenadas
+          const visualWidth = width
+          const visualHeight = height
+          
+          // Establecer el tamaño real del canvas (considerando DPR para pantallas retina)
+          canvas.width = visualWidth * dpr
+          canvas.height = visualHeight * dpr
+          
+          // Establecer el tamaño visual del canvas
+          canvas.style.width = `${visualWidth}px`
+          canvas.style.height = `${visualHeight}px`
+
+          // Reiniciar el contexto y escalar para pantallas retina
+          ctx.setTransform(1, 0, 0, 1, 0, 0) // Resetear transformación
+          ctx.scale(dpr, dpr)
+          
+          // Configurar el estilo de dibujo
+          ctx.strokeStyle = '#000'
+          ctx.lineWidth = 2
+          ctx.lineCap = 'round'
+          ctx.lineJoin = 'round'
+        })
+      }
+
+      // Inicializar después de un pequeño delay para asegurar que el diálogo esté renderizado
+      const timeoutId = setTimeout(resizeCanvas, 100)
+      
+      // Ajustar cuando cambia el tamaño de la ventana
+      window.addEventListener('resize', resizeCanvas)
+      
+      return () => {
+        clearTimeout(timeoutId)
+        window.removeEventListener('resize', resizeCanvas)
       }
     }
   }, [open])
 
+  // Limpiar canvas cuando se cierra el diálogo
+  useEffect(() => {
+    if (!open && canvasRef.current) {
+      const canvas = canvasRef.current
+      const ctx = canvas.getContext('2d')
+      if (ctx) {
+        ctx.clearRect(0, 0, canvas.width, canvas.height)
+        setHasSignature(false)
+      }
+    }
+  }, [open])
+
+  const getCoordinates = (e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>) => {
+    if (!canvasRef.current) return { x: 0, y: 0 }
+    
+    const canvas = canvasRef.current
+    const rect = canvas.getBoundingClientRect()
+    
+    let clientX: number
+    let clientY: number
+    
+    if ('touches' in e) {
+      clientX = e.touches[0].clientX
+      clientY = e.touches[0].clientY
+    } else {
+      clientX = e.clientX
+      clientY = e.clientY
+    }
+    
+    // Calcular coordenadas relativas al canvas (ya escalado por el contexto)
+    const x = clientX - rect.left
+    const y = clientY - rect.top
+    
+    return { x, y }
+  }
+
   const startDrawing = (e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>) => {
+    e.preventDefault()
     if (!canvasRef.current) return
     const canvas = canvasRef.current
     const ctx = canvas.getContext('2d')
     if (!ctx) return
 
     setIsDrawing(true)
-    const rect = canvas.getBoundingClientRect()
-    const x = 'touches' in e ? e.touches[0].clientX - rect.left : e.clientX - rect.left
-    const y = 'touches' in e ? e.touches[0].clientY - rect.top : e.clientY - rect.top
-
+    const { x, y } = getCoordinates(e)
     ctx.beginPath()
     ctx.moveTo(x, y)
   }
 
   const draw = (e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>) => {
+    e.preventDefault()
     if (!isDrawing || !canvasRef.current) return
     const canvas = canvasRef.current
     const ctx = canvas.getContext('2d')
     if (!ctx) return
 
-    const rect = canvas.getBoundingClientRect()
-    const x = 'touches' in e ? e.touches[0].clientX - rect.left : e.clientX - rect.left
-    const y = 'touches' in e ? e.touches[0].clientY - rect.top : e.clientY - rect.top
-
+    const { x, y } = getCoordinates(e)
     ctx.lineTo(x, y)
     ctx.stroke()
     setHasSignature(true)
@@ -146,12 +224,14 @@ export default function FirmaDialog({
 
           {modo === 'manual' && (
             <div className="space-y-2">
-              <div className="border-2 border-dashed rounded-lg p-4 bg-muted/50">
+              <div 
+                ref={containerRef}
+                className="border-2 border-dashed rounded-lg p-4 bg-muted/50"
+              >
                 <canvas
                   ref={canvasRef}
-                  width={400}
-                  height={200}
-                  className="w-full h-48 cursor-crosshair touch-none border rounded bg-white"
+                  className="w-full cursor-crosshair touch-none border rounded bg-white"
+                  style={{ aspectRatio: '2/1', maxHeight: '300px' }}
                   onMouseDown={startDrawing}
                   onMouseMove={draw}
                   onMouseUp={stopDrawing}

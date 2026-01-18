@@ -28,6 +28,15 @@ function ProtectedRoute({ children, allowedRoles }: { children: React.ReactNode;
     return <Navigate to="/login" replace />
   }
 
+  // Si el rol aún no se ha determinado, esperar un momento más
+  if (user && !role) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-lg">Verificando permisos...</div>
+      </div>
+    )
+  }
+
   if (allowedRoles && role && !allowedRoles.includes(role)) {
     // Redirigir según el rol
     if (role === 'guardia') {

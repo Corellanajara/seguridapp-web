@@ -18,12 +18,20 @@ L.Icon.Default.mergeOptions({
 
 interface MapViewProps {
   guardias: Guardia[]
+  centerOnUser?: [number, number]
 }
 
-function MapUpdater({ guardias }: { guardias: Guardia[] }) {
+function MapUpdater({ guardias, centerOnUser }: { guardias: Guardia[]; centerOnUser?: [number, number] }) {
   const map = useMap()
 
   useEffect(() => {
+    // Si hay una ubicación del usuario, centrar en ella
+    if (centerOnUser) {
+      map.setView(centerOnUser, 15, { animate: true })
+      return
+    }
+
+    // Si no hay ubicación del usuario, ajustar a los guardias
     if (guardias.length === 0) return
 
     const bounds = guardias
@@ -33,12 +41,12 @@ function MapUpdater({ guardias }: { guardias: Guardia[] }) {
     if (bounds.length > 0) {
       map.fitBounds(bounds, { padding: [50, 50] })
     }
-  }, [guardias, map])
+  }, [guardias, map, centerOnUser])
 
   return null
 }
 
-export default function MapView({ guardias }: MapViewProps) {
+export default function MapView({ guardias, centerOnUser }: MapViewProps) {
   const mapRef = useRef<L.Map | null>(null)
 
   // Crear iconos personalizados para cada guardia
@@ -69,12 +77,12 @@ export default function MapView({ guardias }: MapViewProps) {
     })
   }
 
-  const defaultCenter: [number, number] = [-34.6037, -58.3816] // Buenos Aires por defecto
+  const defaultCenter: [number, number] = centerOnUser || [-34.6037, -58.3816] // Buenos Aires por defecto o ubicación del usuario
 
   return (
     <MapContainer
       center={defaultCenter}
-      zoom={13}
+      zoom={centerOnUser ? 15 : 13}
       style={{ height: '100%', width: '100%' }}
       ref={mapRef}
     >
@@ -82,7 +90,7 @@ export default function MapView({ guardias }: MapViewProps) {
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
       />
-      <MapUpdater guardias={guardias} />
+      <MapUpdater guardias={guardias} centerOnUser={centerOnUser} />
       {guardias
         .filter((g) => g.latitud && g.longitud && g.activo)
         .map((guardia) => (

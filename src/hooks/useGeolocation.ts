@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 
 interface GeolocationState {
   latitud: number | null
@@ -11,6 +11,7 @@ interface GeolocationOptions {
   enableHighAccuracy?: boolean
   timeout?: number
   maximumAge?: number
+  autoStart?: boolean // Si es false, no inicia automáticamente
 }
 
 export function useGeolocation(options: GeolocationOptions = {}) {
@@ -18,10 +19,68 @@ export function useGeolocation(options: GeolocationOptions = {}) {
     latitud: null,
     longitud: null,
     error: null,
-    loading: true,
+    loading: options.autoStart !== false,
   })
 
+  const requestLocation = useCallback(() => {
+    if (!navigator.geolocation) {
+      setState({
+        latitud: null,
+        longitud: null,
+        error: 'Geolocalización no soportada por este navegador',
+        loading: false,
+      })
+      return
+    }
+
+    setState(prev => ({ ...prev, loading: true, error: null }))
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        setState({
+          latitud: position.coords.latitude,
+          longitud: position.coords.longitude,
+          error: null,
+          loading: false,
+        })
+      },
+      (error) => {
+        let errorMessage = 'Error desconocido al obtener la ubicación'
+        
+        switch (error.code) {
+          case error.PERMISSION_DENIED:
+            errorMessage = 'Permiso de ubicación denegado. Por favor, permite el acceso a la ubicación en la configuración del navegador.'
+            break
+          case error.POSITION_UNAVAILABLE:
+            errorMessage = 'Información de ubicación no disponible'
+            break
+          case error.TIMEOUT:
+            errorMessage = 'Tiempo de espera agotado al obtener la ubicación'
+            break
+        }
+
+        setState({
+          latitud: null,
+          longitud: null,
+          error: errorMessage,
+          loading: false,
+        })
+      },
+      {
+        enableHighAccuracy: options.enableHighAccuracy ?? true,
+        timeout: options.timeout ?? 10000,
+        maximumAge: options.maximumAge ?? 0,
+      }
+    )
+  }, [options.enableHighAccuracy, options.timeout, options.maximumAge])
+
   useEffect(() => {
+    // Si autoStart es false, no iniciar automáticamente
+    if (options.autoStart === false) {
+      setState(prev => ({ ...prev, loading: false }))
+      return
+    }
+
     if (!navigator.geolocation) {
       setState({
         latitud: null,
@@ -73,8 +132,8 @@ export function useGeolocation(options: GeolocationOptions = {}) {
     return () => {
       navigator.geolocation.clearWatch(watchId)
     }
-  }, [options.enableHighAccuracy, options.timeout, options.maximumAge])
+  }, [options.enableHighAccuracy, options.timeout, options.maximumAge, options.autoStart])
 
-  return state
+  return { ...state, requestLocation }
 }
 

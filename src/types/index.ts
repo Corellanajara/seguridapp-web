@@ -220,10 +220,12 @@ export interface Permiso {
   created_at: string
 }
 
+export type TipoDocumento = 'contrato' | 'manual' | 'politica' | 'procedimiento' | 'formulario'
+
 export interface Documento {
   id: string
   nombre: string
-  tipo: string
+  tipo: TipoDocumento
   archivo_url: string
   version: number
   estado: 'borrador' | 'pendiente' | 'aprobado' | 'rechazado'
@@ -238,5 +240,32 @@ export interface VersionDocumento {
   version: number
   archivo_url: string
   cambios?: string
+  created_at: string
+}
+
+export interface AsignacionDocumento {
+  id: string
+  documento_id: string
+  guardia_id: string
+  estado: 'pendiente' | 'firmado' | 'rechazado'
+  fecha_asignacion: string
+  fecha_firma?: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface AsignacionDocumentoConDetalles extends AsignacionDocumento {
+  documento?: Documento
+  guardia?: Guardia
+}
+
+export interface FirmaDocumento {
+  id: string
+  asignacion_id: string
+  firma_data: string // JSON string con los datos de la firma
+  tipo_firma: 'manual' | 'clave_unica' | 'electronica'
+  hash_firma?: string | null
+  ip_address?: string | null
+  user_agent?: string | null
   created_at: string
 }

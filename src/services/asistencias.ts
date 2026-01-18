@@ -1,4 +1,4 @@
-import { supabase } from '@/lib/supabase'
+import { supabase, getAuthenticatedUser } from '@/lib/supabase'
 import { Asistencia, AsistenciaConGuardia } from '@/types'
 
 export interface CrearAsistenciaData {
@@ -16,11 +16,7 @@ export const asistenciasService = {
    * Crea una nueva asistencia para el guardia autenticado
    */
   async crearAsistencia(data: CrearAsistenciaData): Promise<Asistencia> {
-    const { data: { user } } = await supabase.auth.getUser()
-    
-    if (!user) {
-      throw new Error('Usuario no autenticado')
-    }
+    const user = await getAuthenticatedUser()
 
     // Obtener el ID del guardia autenticado
     const { data: guardia, error: findError } = await supabase
@@ -57,11 +53,7 @@ export const asistenciasService = {
    * Obtiene todas las asistencias del guardia autenticado
    */
   async getMisAsistencias(): Promise<Asistencia[]> {
-    const { data: { user } } = await supabase.auth.getUser()
-    
-    if (!user) {
-      throw new Error('Usuario no autenticado')
-    }
+    const user = await getAuthenticatedUser()
 
     // Obtener el ID del guardia autenticado
     const { data: guardia, error: findError } = await supabase
@@ -143,11 +135,7 @@ export const asistenciasService = {
    * Obtiene la última asistencia del guardia autenticado
    */
   async getUltimaAsistencia(): Promise<Asistencia | null> {
-    const { data: { user } } = await supabase.auth.getUser()
-    
-    if (!user) {
-      throw new Error('Usuario no autenticado')
-    }
+    const user = await getAuthenticatedUser()
 
     // Obtener el ID del guardia autenticado
     const { data: guardia, error: findError } = await supabase

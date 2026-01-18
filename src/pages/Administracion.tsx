@@ -167,16 +167,52 @@ export default function Administracion() {
                                 {/* Firma documental */}
                                 <div className="space-y-1">
                                   <p className="text-xs text-muted-foreground">Firma Documental</p>
-                                  <div className="flex items-center gap-2">
-                                    <FileSignature className="h-3 w-3 text-muted-foreground" />
-                                    <span className="text-xs text-muted-foreground">
-                                      {asistencia.firma_clave_unica
-                                        ? 'Clave Única (Mock)'
-                                        : asistencia.firma_documental
-                                        ? 'Firma Electrónica (Mock)'
-                                        : 'Pendiente'}
-                                    </span>
-                                  </div>
+                                  {asistencia.firma_documental ? (
+                                    <div className="space-y-2">
+                                      {(() => {
+                                        try {
+                                          const firmaData = JSON.parse(asistencia.firma_documental)
+                                          const esFirmaManual = firmaData.tipo === 'manual' && firmaData.datos
+                                          
+                                          return esFirmaManual ? (
+                                            <div className="space-y-1">
+                                              <img
+                                                src={firmaData.datos}
+                                                alt="Firma del guardia"
+                                                className="max-w-full h-20 border rounded bg-white object-contain"
+                                              />
+                                              <p className="text-xs text-muted-foreground">
+                                                Firma manual - {new Date(firmaData.timestamp).toLocaleString('es-AR')}
+                                              </p>
+                                            </div>
+                                          ) : (
+                                            <div className="flex items-center gap-2">
+                                              <FileSignature className="h-3 w-3 text-muted-foreground" />
+                                              <span className="text-xs text-muted-foreground">
+                                                {asistencia.firma_clave_unica
+                                                  ? 'Clave Única (Mock)'
+                                                  : 'Firma Electrónica'}
+                                              </span>
+                                            </div>
+                                          )
+                                        } catch (error) {
+                                          return (
+                                            <div className="flex items-center gap-2">
+                                              <FileSignature className="h-3 w-3 text-muted-foreground" />
+                                              <span className="text-xs text-muted-foreground">
+                                                Firma registrada (formato no válido)
+                                              </span>
+                                            </div>
+                                          )
+                                        }
+                                      })()}
+                                    </div>
+                                  ) : (
+                                    <div className="flex items-center gap-2">
+                                      <FileSignature className="h-3 w-3 text-muted-foreground" />
+                                      <span className="text-xs text-muted-foreground">Pendiente</span>
+                                    </div>
+                                  )}
                                 </div>
                               </div>
 

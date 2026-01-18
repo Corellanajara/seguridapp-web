@@ -22,41 +22,91 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [role, setRole] = useState<UserRole | null>(null)
 
   useEffect(() => {
+    let isMounted = true
+    
     // Función para determinar el rol del usuario
-    const determinarRol = async (user: User | null) => {
+    const determinarRol = async (user: User | null): Promise<'guardia' | 'admin'> => {
       if (!user) {
-        setRole(null)
-        return
+        throw new Error('Usuario no disponible')
       }
 
       try {
-        const esGuardia = await ubicacionService.esGuardia()
-        setRole(esGuardia ? 'guardia' : 'admin')
+        // Intentar verificar si es guardia con timeout
+        const timeoutPromise = new Promise<boolean>((resolve) => {
+          setTimeout(() => resolve(false), 2000) // Timeout de 2 segundos
+        })
+
+        const esGuardiaPromise = ubicacionService.esGuardia()
+        
+        const esGuardia = await Promise.race([esGuardiaPromise, timeoutPromise])
+        return esGuardia ? 'guardia' : 'admin'
       } catch (error) {
-        // Si hay error, asumimos que es admin
-        setRole('admin')
+        // Si hay error, asumir admin por defecto
+        return 'admin'
       }
     }
 
     // Obtener sesión inicial
     supabase.auth.getSession().then(async ({ data: { session } }) => {
+      if (!isMounted) return
+      
       setSession(session)
       setUser(session?.user ?? null)
-      await determinarRol(session?.user ?? null)
-      setLoading(false)
+      
+      if (session?.user) {
+        // No bloquear - establecer loading en false rápidamente
+        setLoading(false)
+        
+        // Verificar rol en segundo plano y actualizar cuando se complete
+        determinarRol(session.user).then((rol) => {
+          if (isMounted) {
+            setRole(rol)
+          }
+        }).catch(() => {
+          // Si falla, establecer admin solo después del error
+          if (isMounted) {
+            setRole('admin')
+          }
+        })
+      } else {
+        setRole(null)
+        setLoading(false)
+      }
     })
 
     // Escuchar cambios de autenticación
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (_event, session) => {
+      if (!isMounted) return
+      
       setSession(session)
       setUser(session?.user ?? null)
-      await determinarRol(session?.user ?? null)
-      setLoading(false)
+      
+      if (session?.user) {
+        // No bloquear - establecer loading en false rápidamente
+        setLoading(false)
+        
+        // Verificar rol en segundo plano
+        determinarRol(session.user).then((rol) => {
+          if (isMounted) {
+            setRole(rol)
+          }
+        }).catch(() => {
+          if (isMounted) {
+            setRole('admin')
+          }
+        })
+      } else {
+        setRole(null)
+        setLoading(false)
+      }
     })
 
-    return () => subscription.unsubscribe()
+    return () => {
+      isMounted = false
+      subscription.unsubscribe()
+    }
   }, [])
 
   const signIn = async (email: string, password: string) => {

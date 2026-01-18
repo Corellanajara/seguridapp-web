@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react'
-import Layout from '@/components/Layout'
 import { reportesService, ReporteAsistencias, ReporteHorasTrabajadas, EstadisticasPuntualidad } from '@/services/reportes'
 import { guardiasService } from '@/services/guardias'
 import { Guardia } from '@/types'
@@ -133,8 +132,7 @@ export default function Reportes() {
   }
 
   return (
-    <Layout>
-      <div className="space-y-6">
+    <div className="space-y-6">
         <div>
           <h1 className="text-3xl font-bold">Reportes y Estadísticas</h1>
           <p className="text-muted-foreground">
@@ -407,6 +405,5 @@ export default function Reportes() {
           </TabsContent>
         </Tabs>
       </div>
-    </Layout>
   )
 }

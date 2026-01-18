@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react'
-import Layout from '@/components/Layout'
 import { turnosService } from '@/services/turnos'
 import { guardiasService } from '@/services/guardias'
 import { Turno, Horario, AsignacionTurno, AsignacionTurnoConDetalles, Guardia } from '@/types'
@@ -217,16 +216,13 @@ export default function Turnos() {
 
   if (loading) {
     return (
-      <Layout>
-        <div className="flex items-center justify-center h-64">
-          <Loader2 className="h-8 w-8 animate-spin" />
-        </div>
-      </Layout>
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="h-8 w-8 animate-spin" />
+      </div>
     )
   }
 
   return (
-    <Layout>
       <div className="space-y-6">
         <div>
           <h1 className="text-3xl font-bold">Turnos y Horarios</h1>
@@ -564,6 +560,5 @@ export default function Turnos() {
           </TabsContent>
         </Tabs>
       </div>
-    </Layout>
   )
 }
