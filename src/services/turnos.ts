@@ -223,7 +223,7 @@ export const turnosService = {
     return { valido: true }
   },
 
-  async calcularHorasTrabajadas(guardiaId: string, fechaInicio: string, fechaFin: string): Promise<number> {
+  async calcularHorasTrabajadas(_guardiaId: string, _fechaInicio: string, _fechaFin: string): Promise<number> {
     // Esta función calcula las horas trabajadas basándose en las asistencias
     // Se implementará más adelante cuando tengamos el historial completo
     return 0

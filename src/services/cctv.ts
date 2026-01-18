@@ -1,5 +1,3 @@
-import { supabase } from '@/lib/supabase'
-
 export interface Camara {
   id: string
   nombre: string
@@ -20,7 +18,7 @@ export const cctvService = {
   /**
    * Obtiene el stream de una cámara
    */
-  async getStream(camaraId: string): Promise<string> {
+  async getStream(_camaraId: string): Promise<string> {
     // Mock: En producción, esto retornaría la URL del stream
     return ''
   },

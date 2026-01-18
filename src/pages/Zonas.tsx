@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef } from 'react'
 import { zonasService } from '@/services/zonas'
 import { guardiasService } from '@/services/guardias'
-import { Zona, AsignacionZona, AsignacionZonaConDetalles, Guardia, AlertaZona } from '@/types'
+import { Zona, AsignacionZonaConDetalles, Guardia, AlertaZona } from '@/types'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'

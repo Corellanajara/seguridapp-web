@@ -4,7 +4,7 @@ import { analyticsService, KPIData, TendenciaData } from '@/services/analytics'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Users, Clock, AlertTriangle, MapPin, Loader2, TrendingUp } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, BarChart, Bar } from 'recharts'
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts'
 
 export default function Analytics() {
   const { toast } = useToast()

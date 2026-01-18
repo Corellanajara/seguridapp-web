@@ -39,7 +39,7 @@ function MapUpdater({ lat, lng }: { lat: number; lng: number }) {
 }
 
 export default function GuardiaApp() {
-  const { user, signOut } = useAuth()
+  const { signOut } = useAuth()
   const navigate = useNavigate()
   const { toast } = useToast()
   const [guardia, setGuardia] = useState<Guardia | null>(null)
@@ -228,7 +228,6 @@ export default function GuardiaApp() {
         // Calcular distancia mínima a cualquier borde del polígono
         let distanciaMinima = Infinity
         for (let i = 0; i < puntos.length; i++) {
-          const j = (i + 1) % puntos.length
           const distancia = zonasService.calcularDistancia(
             latitud,
             longitud,
@@ -448,7 +447,7 @@ export default function GuardiaApp() {
       const filePath = `${fileName}`
 
       // Subir a Supabase Storage
-      const { data, error } = await supabase.storage
+      const { error } = await supabase.storage
         .from('fotos-asistencias')
         .upload(filePath, blob, {
           contentType: 'image/jpeg',

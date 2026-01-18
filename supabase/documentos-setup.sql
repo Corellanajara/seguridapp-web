@@ -112,9 +112,7 @@ CREATE POLICY "Guardias pueden ver sus firmas" ON public.firmas_documento FOR SE
   );
 
 CREATE POLICY "Admins pueden ver todas las firmas" ON public.firmas_documento FOR SELECT TO authenticated 
-  USING (NOT public.es_guardia_autenticado());
-
-CREATE POLICY "Guardias pueden crear firmas para sus asignaciones" ON public.firmas_documento FOR INSERT TO authenticated 
+  USING (NOT public.es_guardia_autenticado());CREATE POLICY "Guardias pueden crear firmas para sus asignaciones" ON public.firmas_documento FOR INSERT TO authenticated 
   WITH CHECK (
     asignacion_id IN (
       SELECT id FROM public.asignaciones_documento 

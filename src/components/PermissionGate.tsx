@@ -10,7 +10,6 @@ interface PermissionGateProps {
 
 export default function PermissionGate({
   children,
-  requiredPermission,
   requiredRole,
   fallback = null,
 }: PermissionGateProps) {

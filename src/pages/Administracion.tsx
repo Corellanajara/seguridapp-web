@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import { Users, Building, MapPin, Settings, Clock, Camera, FileSignature, Loader2, RefreshCw } from 'lucide-react'
+import { Users, Settings, Clock, Camera, FileSignature, Loader2, RefreshCw } from 'lucide-react'
 import { asistenciasService } from '@/services/asistencias'
 import { AsistenciaConGuardia } from '@/types'
 import { useToast } from '@/hooks/use-toast'

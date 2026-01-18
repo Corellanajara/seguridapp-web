@@ -269,3 +269,11 @@ export interface FirmaDocumento {
   user_agent?: string | null
   created_at: string
 }
+
+export interface FirmaData {
+  tipo: 'manual' | 'clave_unica' | 'electronica'
+  datos: string // JSON string o base64 según el tipo
+  hash?: string
+  timestamp: string
+  valido: boolean
+}

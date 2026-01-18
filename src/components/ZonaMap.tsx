@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, useCallback, MutableRefObject } from 'react'
+import { useEffect, useState, useCallback, MutableRefObject } from 'react'
 import { MapContainer, TileLayer, Polygon, Circle, useMap, useMapEvents, Marker, Polyline } from 'react-leaflet'
 import L from 'leaflet'
 import { Zona } from '@/types'
@@ -43,8 +43,6 @@ function DrawingHandler({
 }) {
   const [puntos, setPuntos] = useState<[number, number][]>([])
   const [centro, setCentro] = useState<[number, number] | null>(null)
-  const [radio, setRadio] = useState<number>(0)
-  const map = useMap()
 
   // Calcular distancia entre dos puntos en metros
   const calcularDistancia = (p1: [number, number], p2: [number, number]): number => {
@@ -82,8 +80,6 @@ function DrawingHandler({
           const nuevoPunto: [number, number] = [e.latlng.lat, e.latlng.lng]
           const distancia = calcularDistancia(centro, nuevoPunto)
           
-          // Establecer radio temporalmente para mostrar el círculo
-          setRadio(distancia)
           if (onRadioChange) onRadioChange(distancia)
           
           // Crear la zona después de un pequeño delay para que se vea el círculo temporal
@@ -95,7 +91,6 @@ function DrawingHandler({
             })
             onZonaCreada({ tipo: 'circulo', coordenadas })
             setCentro(null)
-            setRadio(0)
             if (onCentroChange) onCentroChange(null)
             if (onRadioChange) onRadioChange(0)
           }, 100)
@@ -150,7 +145,6 @@ function DrawingHandler({
   useEffect(() => {
     setPuntos([])
     setCentro(null)
-    setRadio(0)
     if (onPuntosChange) onPuntosChange([])
     if (onCentroChange) onCentroChange(null)
     if (onRadioChange) onRadioChange(0)

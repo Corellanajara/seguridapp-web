@@ -1,5 +1,3 @@
-import { supabase } from '@/lib/supabase'
-
 export interface FirmaData {
   tipo: 'manual' | 'clave_unica' | 'electronica'
   datos: string // JSON string o base64 según el tipo
@@ -86,7 +84,7 @@ export const firmaService = {
   /**
    * Almacena una firma de forma segura
    */
-  async almacenarFirma(firma: FirmaData, referencia: string): Promise<string> {
+  async almacenarFirma(firma: FirmaData, _referencia: string): Promise<string> {
     // En producción, almacenar en un servicio seguro o encriptado
     // Por ahora, retornamos un identificador
     const firmaCompleta = JSON.stringify(firma)

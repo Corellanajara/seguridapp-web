@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { turnosService } from '@/services/turnos'
 import { guardiasService } from '@/services/guardias'
-import { Turno, Horario, AsignacionTurno, AsignacionTurnoConDetalles, Guardia } from '@/types'
+import { Turno, AsignacionTurnoConDetalles, Guardia } from '@/types'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
@@ -26,15 +26,6 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 
-const DIAS_SEMANA = [
-  'Domingo',
-  'Lunes',
-  'Martes',
-  'Miércoles',
-  'Jueves',
-  'Viernes',
-  'Sábado',
-]
 
 export default function Turnos() {
   const { toast } = useToast()

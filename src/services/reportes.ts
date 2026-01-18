@@ -1,5 +1,4 @@
 import { supabase } from '@/lib/supabase'
-import { Asistencia, Guardia } from '@/types'
 
 export interface ReporteAsistencias {
   guardia_id: string

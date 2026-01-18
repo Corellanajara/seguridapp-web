@@ -2,11 +2,11 @@ import { useEffect, useState, useRef } from 'react'
 import Layout from '@/components/Layout'
 import { incidentesService } from '@/services/incidentes'
 import { ubicacionService } from '@/services/ubicacion'
-import { Incidente, IncidenteConDetalles, TipoIncidente, Guardia } from '@/types'
+import { IncidenteConDetalles, TipoIncidente } from '@/types'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Plus, AlertTriangle, Loader2, CheckCircle2, XCircle, Camera } from 'lucide-react'
+import { Plus, AlertTriangle, Loader2, Camera } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
 import {
   Dialog,
@@ -117,7 +117,7 @@ export default function Incidentes() {
           videoRef.current.srcObject = stream
         }
       })
-      .catch((error) => {
+      .catch(() => {
         toast({
           title: 'Error',
           description: 'No se pudo acceder a la cámara',
@@ -157,7 +157,7 @@ export default function Incidentes() {
       const blob = await response.blob()
       const fileName = `incidentes/${Date.now()}.jpg`
 
-      const { data, error } = await supabase.storage
+      const { error } = await supabase.storage
         .from('fotos-incidentes')
         .upload(fileName, blob, {
           contentType: 'image/jpeg',

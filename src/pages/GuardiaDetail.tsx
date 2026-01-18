@@ -6,7 +6,7 @@ import { Guardia } from '@/types'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
-import { ArrowLeft, MapPin, Phone, Mail, Clock } from 'lucide-react'
+import { ArrowLeft, Phone, Mail, Clock } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
 import MapView from '@/components/MapView'
 
