@@ -98,9 +98,7 @@ CREATE POLICY "Guardias pueden actualizar sus asignaciones pendientes" ON public
     guardia_id IN (
       SELECT id FROM public.guardias WHERE user_id = auth.uid()
     )
-  );
-
--- Políticas RLS para firmas
+  );-- Políticas RLS para firmas
 CREATE POLICY "Guardias pueden ver sus firmas" ON public.firmas_documento FOR SELECT TO authenticated 
   USING (
     asignacion_id IN (
@@ -121,9 +119,7 @@ CREATE POLICY "Admins pueden ver todas las firmas" ON public.firmas_documento FO
         SELECT id FROM public.guardias WHERE user_id = auth.uid()
       )
     )
-  );
-
--- Función para actualizar updated_at automáticamente
+  );-- Función para actualizar updated_at automáticamente
 CREATE OR REPLACE FUNCTION update_asignaciones_documento_updated_at()
 RETURNS TRIGGER AS $$
 BEGIN

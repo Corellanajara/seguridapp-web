@@ -31,6 +31,7 @@ export default function Guardias() {
     apellido: '',
     email: '',
     telefono: '',
+    password: '',
     activo: true,
   })
 
@@ -56,10 +57,11 @@ export default function Guardias() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     try {
-      await guardiasService.create(formData)
+      const { password, ...guardiaData } = formData
+      await guardiasService.createWithUser(guardiaData, password)
       toast({
         title: 'Éxito',
-        description: 'Guardia creado correctamente',
+        description: 'Guardia creado correctamente con usuario de autenticación',
       })
       setOpen(false)
       setFormData({
@@ -67,6 +69,7 @@ export default function Guardias() {
         apellido: '',
         email: '',
         telefono: '',
+        password: '',
         activo: true,
       })
       loadGuardias()
@@ -175,6 +178,22 @@ export default function Guardias() {
                         setFormData({ ...formData, telefono: e.target.value })
                       }
                     />
+                  </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor="password">Clave</Label>
+                    <Input
+                      id="password"
+                      type="password"
+                      value={formData.password}
+                      onChange={(e) =>
+                        setFormData({ ...formData, password: e.target.value })
+                      }
+                      required
+                      minLength={6}
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Mínimo 6 caracteres. El guardia usará esta clave para iniciar sesión.
+                    </p>
                   </div>
                 </div>
                 <DialogFooter>

@@ -34,6 +34,30 @@ export const guardiasService = {
     return data as Guardia
   },
 
+  async createWithUser(
+    guardia: Omit<Guardia, 'id' | 'created_at' | 'updated_at' | 'user_id'>,
+    password: string
+  ) {
+    const { data, error } = await supabase.functions.invoke('crear-guardia', {
+      body: {
+        nombre: guardia.nombre,
+        apellido: guardia.apellido,
+        email: guardia.email,
+        telefono: guardia.telefono,
+        password,
+        activo: guardia.activo,
+      },
+    })
+
+    if (error) throw error
+
+    if (!data.success || !data.data) {
+      throw new Error(data.error || 'Error al crear guardia con usuario')
+    }
+
+    return data.data as Guardia
+  },
+
   async getByUserId(userId: string) {
     const { data, error } = await supabase
       .from('guardias')
